@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mrc.db.mapper.IMapSquareMapper">
+	<select id="getList" parameterType="com.mrc.db.dto.address.map_square_cond" resultType="com.mrc.db.dto.address.t_map_square">
+		select a.square_code
+		      ,a.search_latitude
+		      ,a.search_longitude
+		      ,a.latitude
+		      ,a.longitude
+		  from t_map_square a
+		
+		<where>
+			
+			
+			<if test="square_code != null ">
+				and a.square_code = #{square_code}
+			</if>
+			<if test="search_latitude != null ">
+				and search_latitude = #{search_latitude}
+			</if>
+			<if test="search_latitude != null ">
+				and search_longitude = #{search_longitude}
+			</if>
+		</where>
+	</select>
+	
+	<insert id="save" keyProperty="square_code" parameterType="com.mrc.db.dto.address.t_map_square" >
+		INSERT INTO t_map_square
+				  (	
+				  	square_code
+		           ,search_latitude
+		           ,search_longitude
+		           ,latitude
+		           ,longitude
+				  )
+		    values(  
+		    	   #{square_code},
+		    	   #{search_latitude},
+		    	   #{search_longitude},
+		    	   #{latitude},  
+		    	   #{longitude}, 
+		    	  )
+		 ON DUPLICATE KEY UPDATE 
+		  	search_latitude  = #{search_latitude}
+		  , search_longitude = #{search_longitude}
+		  , latitude 	     = #{latitude}
+		  , longitude    	 = #{longitude}
+	 
+
+		<selectKey resultType="int"  keyProperty="square_code" order="AFTER">
+        	SELECT LAST_INSERT_ID() as square_code;
+  		</selectKey>			
+	</insert>
+	<update id="update"
+		parameterType="com.mrc.db.dto.address.t_map_square">
+
+		update t_map_square
+		set search_latitude  = #{search_latitude}
+		  , search_longitude = #{search_longitude}
+		  , latitude 	     = #{latitude}
+		  , longitude    	 = #{longitude}
+		  
+        where square_code = #{square_code}
+		  
+
+	</update>
+		<delete id="remove" parameterType="com.mrc.db.dto.address.t_map_square">
+		delete from t_map_square
+		<where>
+			<if test="square_code != null ">
+				and square_code = #{square_code}
+			</if>
+		</where>
+   </delete>
+	
+</mapper>

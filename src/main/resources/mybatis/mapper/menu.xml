@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mrc.db.mapper.IMenuMapper">
+	<select id="getList"
+		parameterType="com.mrc.db.dto.menu.menu_cond"
+		resultType="com.mrc.db.dto.menu.t_menu">
+		select a.menu_code
+              ,a.project_type
+              ,a.search_code
+              ,a.menu_name
+              ,a.full_menu_name
+              ,a.menu_auth
+              ,b.name as menu_auth_name
+              ,a.menu_level
+              ,a.menu_url
+              ,a.menu_icon
+              ,a.menu_icon_style
+              ,a.remark
+              ,a.hide
+              ,a.insert_code
+              ,c.member_name as insert_name
+              ,a.insert_date
+              ,a.update_code
+              ,d.member_name as update_name
+              ,a.update_date
+		
+		from t_menu a
+	   inner join t_common b
+	      on b.main_code = 'A001'
+	   inner join t_member c
+	      on a.insert_code = c.member_code
+	   inner join t_member d
+	      on a.update_code = d.member_code
+	     and b.sub_code = a.menu_auth
+	      
+		<where>
+			<if test="menu_code != null ">
+				and a.menu_code LIKE #{menu_code}
+			</if>
+		    <if test="project_type != null and project_type == '-1' ">
+				and a.project_type in (1,2)
+			</if>
+			<if test="project_type != null and project_type > 0 ">
+				and a.project_type = #{project_type}
+			</if>
+			<if test="search_code != null and search_code != '' ">
+				and a.search_code = LIKE CONCAT('%', #{search_code}, '%')
+			</if>
+			<if test="menu_auth != null and menu_auth != '' and menu_auth = 1">
+				and a.menu_auth IN ( 1,10)
+			</if>
+			<if test="menu_auth != null and menu_auth != '' and menu_auth != 1">
+				and a.menu_auth = #{menu_auth}
+			</if>
+			<if test="menu_name != null and menu_name != '' ">
+				and a.menu_name LIKE CONCAT('%', #{menu_name}, '%')
+			</if>
+			<if test="hide != null  ">
+				and a.hide = #{hide}
+			</if>
+		</where>
+		order by search_code
+	</select>
+
+	<insert id="save"  keyProperty="menu_code" parameterType="com.mrc.db.dto.menu.t_menu" >
+		INSERT INTO t_menu
+		(  project_type, search_code, menu_name,       full_menu_name, menu_auth, menu_level
+		 , menu_url,     menu_icon,   menu_icon_style, remark
+		 , hide,         insert_code, insert_date,     update_code,    update_date )
+		values( #{project_type}, #{search_code},      #{menu_name},   #{full_menu_name}, #{menu_auth}, #{menu_level}, #{menu_url}
+		      , #{menu_icon},    #{menu_icon_style},  #{remark},      #{hide}
+		      , #{insert_code},  current_timestamp(), #{insert_code}, current_timestamp())
+		 ON DUPLICATE KEY UPDATE 
+		    project_type   = #{project_type}
+		  , search_code    = #{search_code}
+		  , menu_name      = #{menu_name}
+		  , full_menu_name = #{full_menu_name}
+		  , menu_auth      = #{menu_auth}
+		  , menu_level     = #{menu_level}
+		  , menu_url       = #{menu_url}
+		  , menu_icon      = #{menu_icon}
+		  , menu_icon_style= #{menu_icon_style}
+		  , remark         = #{remark}
+		  , hide           = #{hide}
+		  , update_code    = #{insert_code}
+		  , update_date    = current_timestamp();
+		  <selectKey resultType="int"  keyProperty="menu_code" order="AFTER">
+        	SELECT LAST_INSERT_ID() as menu_code;
+  		</selectKey> 
+	</insert>
+	<delete id="delete" parameterType="com.mrc.db.dto.menu.t_menu">
+		delete from t_menu
+		<where>
+			<if test="menu_code != null ">
+				and menu_code = #{menu_code}
+			</if>
+		</where>
+	</delete>
+	<update id="update" parameterType="com.mrc.db.dto.member.t_member">
+		update t_menu
+		set  project_type= #{project_type}
+			,search_code = #{search_code}    
+			,menu_name = #{menu_name}   
+			,full_menu_name = #{full_menu_name}
+			,menu_auth = #{menu_auth}      
+			,menu_level = #{menu_level}     
+			,menu_url = #{menu_url}
+			,menu_icon = #{menu_icon}   
+			,menu_icon_style = #{menu_icon_style}          
+			,remark = #{remark}         
+			,hide = #{hide}           
+			,update_code = current_timestamp()
+		where menu_code = #{menu_code}
+	</update>
+</mapper>

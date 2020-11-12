@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mrc.db.mapper.IFileMapper">
+	<select id="getList"
+		parameterType="com.mrc.db.dto.file.file_cond"
+		resultType="com.mrc.db.dto.file.t_file">
+		select *
+		from t_file
+		<where>
+		    <if test="file_code != null ">
+				and file_code = #{file_code}
+			</if>
+			<if test="table_name != null and table_name !='' ">
+				and table_name = #{table_name}
+			</if>
+			<if test="table_key != null and table_key != '' ">
+				and table_key = #{table_key}
+			</if>
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.mrc.db.dto.file.t_file" >
+		INSERT INTO t_file
+		(table_name, table_key, file_seq, file_size, file_name, file_ext, file_url, remark, insert_code, insert_date )
+		
+		values( #{table_name} ,#{table_key} ,#{file_seq} ,#{file_size} ,#{file_name} ,#{file_ext} ,#{file_url} ,#{remark} ,#{insert_code} ,current_timestamp())
+		 ON DUPLICATE KEY UPDATE 
+		    table_name    = #{table_name}
+		  , table_key     = #{table_key}
+		  , file_seq      = #{file_seq}
+		  , file_size     = #{file_size}
+		  , file_name     = #{file_name}
+		  , file_ext      = #{file_ext}
+		  , file_url      = #{file_url}
+		  , remark        = #{remark}
+		  , insert_code   = #{insert_code}
+		  , insert_date   = current_timestamp();
+	</insert>
+
+
+
+	<delete id="remove" parameterType="com.mrc.db.dto.file.t_file">
+		delete from t_file
+		<where>
+			<if test="file_code != null ">
+				and file_code = #{file_code}
+			</if>
+		</where>
+   </delete>
+	<update id="update" parameterType="com.mrc.db.dto.file.t_file">
+
+		update t_file
+
+		set table_name    = #{table_name}
+		  , table_key     = #{table_key}
+		  , file_seq      = #{file_seq}
+		  , file_size     = #{file_size}
+		  , file_name     = #{file_name}
+		  , file_ext      = #{file_ext}
+		  , file_url      = #{file_url}
+		  , remark        = #{remark}
+		  , insert_code   = #{insert_code}
+		  , insert_date   = current_timestamp();
+		where file_code = #{file_code}
+
+	</update>
+</mapper>

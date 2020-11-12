@@ -1,0 +1,29 @@
+.componentPage {
+  padding-top: 0px;
+}
+.v-card {
+  padding-top: 30px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 20px;
+  .bottomButtons {
+    padding: 8px 20px 20px 16px;
+  }
+}
+.cardTitle {
+  text-align: left;
+  padding: 0px 24px 4px 16px;
+}
+.cardContent {
+  text-align: left;
+  padding: 8px 16px 0px 16px;
+}
+
+@include mobile {
+  .v-card {
+    padding-top: 12px;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-bottom: 12px;
+  }
+}

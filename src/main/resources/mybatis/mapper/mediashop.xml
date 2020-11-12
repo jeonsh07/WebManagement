@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mrc.db.mapper.IMediaShopMapper">
+	<select id="getLocalBox" parameterType="com.mrc.db.dto.mediaShop.localbox_cond" resultType="com.mrc.db.dto.mediaShop.t_localbox">
+		select *
+		  from t_localbox
+		  
+		<where>
+			and member_code = #{member_code}
+		</where>
+	</select>
+	
+	<select id="getLocalBoxKeyword" parameterType="com.mrc.db.dto.mediaShop.localbox_cond" resultType="String">
+		select k.keyword_name 
+		  from t_keyword as k
+		 inner join (
+		 				select keyword_code 
+		 				  from t_localbox_keyword 
+		 				 where localbox_code = #{localbox_code}
+		 		    ) as bk
+		    on k.keyword_code = bk.keyword_code;
+	</select>
+	
+	<select id="getLocalBoxPlace" parameterType="com.mrc.db.dto.mediaShop.localbox_cond" resultType="com.mrc.db.dto.mediaShop.t_localbox_place">
+		select * from t_localbox_place where localbox_code = #{localbox_code};
+	</select>
+	
+	<insert id="Save" keyProperty="localbox_code" parameterType="com.mrc.db.dto.mediaShop.t_localbox" >		
+		INSERT INTO t_localbox
+				  (	
+				  	localbox_code,
+				  	member_code,
+				  	name,
+				  	profile_url,
+				  	business_time,
+				  	phone,
+				  	announce,
+				  	`desc`,
+				  	remark,
+				  	insert_code, 
+				  	insert_date, 
+				  	update_code, 
+				  	update_date
+				  )
+		    values(  
+		   		   #{localbox_code},
+		    	   #{insert_code},
+				   #{name},
+				   #{profile_url},
+				   #{business_time},
+				   #{phone},
+				   #{announce},
+				   #{desc},
+				   #{remark},
+		    	   #{insert_code},  
+		    	   current_timestamp(),
+		    	   #{insert_code}, 
+		    	   current_timestamp()
+		    	  )
+		 ON DUPLICATE KEY UPDATE 
+		    member_code 		= #{insert_code}
+		  , name 				= #{name}
+		  , profile_url 		= #{profile_url}
+		  , business_time 		= #{business_time}
+		  , phone 		  		= #{phone}
+		  , announce 	  		= #{announce}
+		  , `desc` 				= #{desc}
+		  , remark 				= #{remark}
+		  , update_code 		= #{insert_code}
+		  , update_date 		= current_timestamp();
+
+		<selectKey resultType="int" keyProperty="localbox_code" order="AFTER">
+        	SELECT LAST_INSERT_ID() as localbox_code;
+  		</selectKey>			
+	</insert>
+	
+	<delete id="deleteLocalboxPlace" parameterType="com.mrc.db.dto.mediaShop.t_localbox_place">
+		delete from t_localbox_place where localbox_code = #{localbox_code};
+   	</delete>
+	
+	<insert id="saveLocalboxPlace" keyProperty="localbox_code" parameterType="com.mrc.db.dto.mediaShop.t_localbox_place" >
+
+	    set @address =  #{address};
+		set @area_code = fn_getAreacode (@address);
+		set @region = fn_getAreaName (@address);
+
+
+  		INSERT INTO t_localbox_place
+				  (	
+				  	localbox_code,
+				  	area_code,
+				  	region,
+				  	address, 
+				  	road_address, 
+				  	address_detail,
+				  	zip_code, 
+				  	latitude,
+				  	longitude,
+				  	radius,
+				  	hide,
+				  	insert_code, 
+				  	insert_date, 
+				  	update_code, 
+				  	update_date
+				  )
+		    values(  
+		    	   #{localbox_code},
+		    	   @area_code,
+		    	   @region,
+		    	   @address ,  
+		    	   #{road_address},
+		    	   #{address_detail}, 
+		    	   #{zip_code}, 
+		    	   #{latitude},
+		    	   #{longitude},
+		    	   #{radius},
+		    	   #{hide},
+		    	   #{insert_code},  
+		    	   current_timestamp(),
+		    	   #{insert_code}, 
+		    	   current_timestamp()
+		    	  )
+	</insert>
+
+	<delete id="deleteLocalboxKeyword" parameterType="Integer">
+		delete from t_localbox_keyword where localbox_code = #{localbox_code};
+   	</delete>
+	
+	<insert id="saveLocalboxKeyword" keyProperty="localbox_code,keyword_code" parameterType="com.mrc.db.dto.mediaShop.t_localbox_keyword">
+  		INSERT INTO t_localbox_keyword
+				  (	
+				  	localbox_code, 
+				  	keyword_code,
+				  	insert_code, 
+				  	insert_date
+				  )
+		    values(  
+		    	   #{localbox_code},
+		    	   #{keyword_code}, 
+		    	   #{insert_code},  
+		    	   current_timestamp()
+		    	  )
+	</insert>
+	
+	<select id="getLocalBoxSimple" parameterType="com.mrc.db.dto.mediaShop.localbox_cond" resultType="com.mrc.db.dto.mediaShop.t_localbox_simple">
+		select tlp.address, 
+			   tl.profile_url, 
+			   tl.`desc` 
+	      from t_localbox tl 
+	     inner join 
+	           t_localbox_place tlp 
+	        on tl.localbox_code = tlp.localbox_code 
+	     where tl.member_code = #{member_code};
+	</select>
+	
+	<select id="getLocalBoxBannerList" parameterType="com.mrc.db.dto.mediaShop.localbox_cond" resultType="com.mrc.db.dto.mediaShop.t_localbox_banner">
+		  set @ROWNUM:=0; 
+		  
+		  select sql_calc_found_rows 
+		  		 @ROWNUM := @ROWNUM + 1 as row_num,
+		  		 tlb.localbox_code,
+		  		 tb.banner_code,
+		  		 tlb.seq, 
+		  	     tb.thumb_image_url,
+		  	     tb.play_type, 
+		  	     tb.title, 
+		  	     tb.sub_title, 
+		  	     tb.device_type2, 
+			     tb.banner_type, 
+			     tbr.status
+		    from t_localbox_banner tlb  	
+		   inner join t_banner tb 
+		      on tlb.banner_code = tb.banner_code
+		    left join (
+					   select tbr.banner_code, 
+					  	      tbr.status 
+					  	 from t_banner_request tbr 
+		                where tbr.is_local = 1 
+		                  and tbr.request_member_code = #{member_code}
+					   ) as tbr 
+			  on tlb.banner_code = tbr.banner_code
+		      
+		  <where>
+			and tb.member_code = #{member_code}
+			and device_type = 2
+
+			<if test="title != null and title != '' ">
+				and tb.title like CONCAT('%', #{title}, '%')
+			</if>
+		  </where>
+
+		  order by tlb.seq
+	      limit #{page_start_no}, #{page_in_data_num};
+	</select>
+	
+	<select id="getLocalBoxPreviewBannerList" parameterType="com.mrc.db.dto.mediaShop.localbox_cond" resultType="com.mrc.db.dto.mediaShop.t_localbox_banner">
+		  set @ROWNUM:=0; 
+		  
+		  select sql_calc_found_rows 
+		  		 @ROWNUM := @ROWNUM + 1 as row_num,
+		  		 tb.banner_code,
+		  	     tb.thumb_image_url,
+		  	     tb.title, 
+		  	     tb.sub_title,  
+			     tb.service_date
+		    from t_localbox_banner tlb  	
+		   inner join t_banner tb 
+		      on tlb.banner_code = tb.banner_code
+		      
+		  <where>
+		  	and tb.member_code = #{member_code}
+		  	
+		  </where>
+				  
+		  order by tlb.seq
+	      limit #{page_start_no}, #{page_in_data_num};
+	</select>
+	
+	<select id="getLocalBoxBannerPlaceList" parameterType="com.mrc.db.dto.mediaShop.localbox_cond" resultType="hashmap">
+		 
+		  select
+		  		 tlb.banner_code,
+		  		 tlb.seq, 
+		  	     group_concat(tbp.address) as address
+		    from t_localbox_banner tlb
+		   inner join t_banner tb 
+		      on tlb.banner_code = tb.banner_code
+		   inner join t_banner_place tbp  
+			  on tlb.banner_code = tbp.banner_code
+		      
+		  <where>
+		  	and tb.member_code = #{member_code}
+		  	
+		  	 <if test="banner_codes.size != 0">
+		  		and tlb.banner_code in
+		  		<foreach collection="banner_codes" item="item" index="index" separator="," open="(" close=")">
+        			#{item}
+     			</foreach>
+			</if>
+			
+		  </where>
+				  
+		  group by tbp.banner_code;
+	</select>
+
+	<select id="getTotalNum" resultType="INTEGER">
+		select FOUND_ROWS();
+	</select>
+	
+   	<select id="getLocalBoxBannerCount" resultType="INTEGER">
+		select IFNULL(MAX(tlb.seq), 0) as seq
+		  from t_localbox tb
+		 inner join t_localbox_banner tlb 
+	        on tb.localbox_code = tlb.localbox_code 
+		 where tb.member_code = #{member_code}
+	</select>
+	
+	<delete id="deleteLocalBoxBanner" parameterType="INTEGER">
+		delete from t_localbox_banner 
+		
+		<where>
+			and banner_code = #{banner_code}
+		</where>
+   	</delete>
+   	
+   	<update id="updateLocalBoxBanner" keyProperty="localbox_code" parameterType="com.mrc.db.dto.mediaShop.t_localbox_banner" >		
+		UPDATE t_localbox_banner
+		   set seq = #{seq},
+		       update_code = #{insert_code}, 
+		       update_date = current_timestamp()		       
+		 
+		 where banner_code = #{banner_code}
+	</update>
+   	
+   	<insert id="saveLocalboxBanner" keyProperty="banner_code" parameterType="com.mrc.db.dto.banner.t_banner">
+   		INSERT INTO t_localbox_banner
+				  (	
+				  	localbox_code,
+				  	seq,
+				  	banner_code,
+				  	`desc`, 
+				  	insert_code, 
+				  	insert_date, 
+				  	update_code, 
+				  	update_date
+				  )
+		    values(  
+		    	   #{localbox_code}, 
+		    	   #{seq},
+		    	   #{banner_code},
+		    	   "",
+		    	   #{insert_code},  
+		    	   current_timestamp(),
+		    	   #{insert_code}, 
+		    	   current_timestamp()
+		    	  )
+   	</insert>
+   	
+   <select id="getLocalBoxCode" resultType="INTEGER">
+		select localbox_code from t_localbox tb
+		 where tb.member_code = #{member_code};
+   </select>
+	
+	<select id="getLocalerList" parameterType="com.mrc.db.dto.mediaShop.localbox_cond" resultType="com.mrc.db.dto.mediaShop.t_localer">
+		  select sql_calc_found_rows
+	   		     ROW_NUMBER() over() as row_num, t.*
+		  from (
+		  select
+	   			 tl.localbox_code,
+		         tl.member_code,
+		         tm.member_id,
+		         tl.profile_url,
+		         tm.nickname,
+		         tmc.company_name,
+		         if (tmc.company_type is null, '개인', tmc.company_type) as company_type,
+		         tlp.address
+  		    from t_localbox tl 
+ 	       inner join t_localbox_place tlp
+              on tl.localbox_code = tlp.localbox_code 
+  		    left join t_member tm 
+    		  on tl.member_code = tm.member_code
+  	        left join (
+  			  	 		select tmc.*, tbt.name as company_type 
+  			    		  from t_member_company tmc
+  			    		  left join t_business_type tbt 
+  			      		    on tmc.business_type = tbt.code
+  					  ) tmc
+    		  on tl.member_code = tmc.member_code
+    		  
+    	  <where>
+    	  	not tl.member_code = #{member_code}
+    	  	
+		  <if test="area_code != null and area_code != '' ">	
+		  	and tlp.area_code like concat(#{area_code},'%')
+		  </if>
+		  <if test="localer_name != null and localer_name != '' ">	
+		  	and tm.nickname like concat('%', #{localer_name}, '%')
+		  	or tmc.company_name like concat('%', #{localer_name}, '%')       	   
+		  </if>
+		  <if test="banner_type == 1 ">
+		  	and instr(business_number, 83) = 4
+		  </if>
+		  ) t
+		  </where>
+		  <where>
+		  <if test="company_type != null and company_type != '' ">
+			t.company_type like concat('%', #{company_type}, '%')
+		  </if>
+		  </where>
+	       limit #{page_start_no}, #{page_in_data_num};
+	</select>
+	
+	<insert id="saveBannerShare" keyProperty="request_code" parameterType="com.mrc.db.dto.mediaShop.t_localbox_banner_request" >
+  		INSERT INTO t_banner_request
+				  (	
+				  	banner_code,
+				  	request_desc,
+				  	is_mobile,
+				  	is_share, 
+				  	is_local, 
+				  	request_member_code,
+				  	approval_member_code, 
+				  	fr_date,
+				  	to_date,
+				  	status,
+				  	reject_type,
+				  	reject_desc,
+				  	remark,
+				  	insert_code, 
+				  	insert_date, 
+				  	update_code, 
+				  	update_date
+				  )
+		    values(  
+				   #{banner_code},
+				   #{request_desc},
+				   #{is_mobile},
+				   #{is_share}, 
+				   #{is_local}, 
+				   #{request_member_code},
+				   #{approval_member_code}, 
+				   #{fr_date},
+				   #{to_date},
+				   #{status},
+				   #{reject_type},
+				   #{reject_desc},
+				   #{remark},
+		    	   #{insert_code},  
+		    	   current_timestamp(),
+		    	   #{insert_code}, 
+		    	   current_timestamp()
+		    	  )
+	</insert>
+	
+	<delete id="deleteBannerShare" parameterType="com.mrc.db.dto.mediaShop.t_localbox_banner_request">
+		delete from t_banner_request 
+		 where banner_code = #{banner_code}
+		  <choose>
+		  	<when test="is_mobile == 1 ">
+		  	 	and is_mobile = 1
+		  	</when>
+		  	<when test="is_share == 1 ">
+		  	 	and is_share = 1
+		  	</when>
+		  	<when test="is_local == 1 ">
+		  	 	and is_local = 1
+		  	</when>
+		  </choose>
+   	</delete>
+   	
+   	<select id="getBannerShare" resultType="hashmap" parameterType="INTEGER">
+		select * from t_banner_request
+		 where banner_code = #{banner_code};
+    </select> 
+</mapper>
+	

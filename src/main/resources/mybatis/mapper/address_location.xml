@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mrc.db.mapper.IAddressLocationMapper">
+	<select id="getList"
+		parameterType="com.mrc.db.dto.address.address_location_cond"
+		resultType="com.mrc.db.dto.address.t_address_location">
+		select a.location_code
+			,a.dong_code
+			,a.sido_name
+			,a.sigungu_name
+			,a.dong_name
+			,a.zip_code
+			,a.x
+			,a.y
+			,a.latitude
+			,a.longitude
+		from t_address_location a
+
+		<where>
+			<if test="location_code != null">
+			and a.location_code = #{location_code}
+			</if>
+			<if test="isXnull != null and isXnull = 1">
+			and a.x is not null and a.latitude is null
+			</if>
+			<if test="startCode != null">
+				and a.location_code >= #{startCode}
+			</if>
+		</where>
+		 <if test='startRow != null'>
+ 				limit #{startRow} , #{page_size}
+ 		</if>
+ 		;
+	</select>
+	
+	<select id="getCurrentDong"
+		parameterType="com.mrc.db.dto.address.address_location_cond"
+		resultType="com.mrc.db.dto.address.location_dong">
+		<![CDATA[
+		
+		SET @latitude := #{search_latitude};
+		SET @longitude := #{search_longitude};
+		CALL sp_getCurrentArea (@latitude, @longitude);
+	
+		 ]]>
+		
+	</select>
+	
+	<insert id="save" keyProperty="location_code"
+		parameterType="com.mrc.db.dto.address.t_address_location">
+		INSERT INTO t_address_location
+		(
+		   dong_code, sido_name, sigungu_name, dong_name, zip_code
+		 , x, y, search_latitude, search_longitude, latitude, longitude
+		)
+		values(
+		   #{dong_code}, #{sido_name}, #{sigungu_name}, #{dong_name},#{zip_code}
+		  ,#{x}, #{y}, #{search_latitude}, #{search_longitude}, #{latitude}, #{longitude}
+        )
+		ON DUPLICATE KEY UPDATE
+		  dong_code         = #{dong_code}
+		 , sido_name        = #{sido_name}
+		 , sigungu_name     = #{sigungu_name}
+		 , dong_name        = #{dong_name}
+		 , zip_code         = #{zip_code}
+		 , x                = #{x}
+		 , y                = #{y}
+		 , search_latitude  = #{search_latitude}
+		 , search_longitude = #{search_longitude}
+		 , latitude         = #{latitude}
+		 , longitude        = #{longitude};
+
+		<selectKey resultType="Integer" keyProperty="location_code"
+			order="AFTER">
+			SELECT LAST_INSERT_ID() as location_code;
+		</selectKey>
+	</insert>
+	<update id="update" parameterType="com.mrc.db.dto.address.t_address_location">
+
+		update t_address_location
+		   set dong_code       = #{dong_code}
+			, sido_name        = #{sido_name}
+			, sigungu_name     = #{sigungu_name}
+			, dong_name        = #{dong_name}
+			, zip_code         = #{zip_code}
+			, x                = #{x}
+			, y                = #{y}
+			, search_latitude  = #{search_latitude}
+			, search_longitude = #{search_longitude}
+			, latitude         = #{latitude}
+			, longitude        = #{longitude}
+
+		where location_code = #{location_code}
+
+
+	</update>
+	
+	<update id="updatelatLongiList" parameterType="java.util.List">
+		<foreach collection="list" item="data" index="index" separator=";">
+	        update t_address_location set search_latitude = #{data.search_latitude} , search_longitude = #{data.search_longitude}, latitude = #{data.latitude} , longitude = #{data.longitude} where location_code = #{data.location_code}
+	    </foreach>
+	</update>
+	<delete id="remove" parameterType="com.mrc.db.dto.address.t_address_location">
+		delete from t_address_location
+		<where>
+			<if test="location_code != null ">
+				and location_code = #{location_code}
+			</if>
+		</where>
+	</delete>
+
+</mapper>

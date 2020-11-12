@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mrc.db.mapper.ISignagePlaceMapper">
+	<select id="getList"
+			parameterType="com.mrc.db.dto.signage.signage_cond"
+			resultType="com.mrc.db.dto.signage.t_signage_place">
+		select a.*
+   	      from t_signage_place a
+		<where>
+			<if test="sign_code != null ">
+				and a.sign_code = #{sign_code}
+			</if>
+		</where>
+		order by a.sign_code, a.place_code
+	</select>
+
+	<insert id="save"  keyProperty="sign_code" parameterType="com.mrc.db.dto.signage.t_signage_place" >
+
+		select @area_code :=fn_getAreaCode (#{address});
+		set @region = #{region};
+		<if test="region == null or region = '' ">
+			set @region := fn_getAreaName (#{address});
+		</if>
+
+		insert into t_signage_place
+		(  place_type, sign_code,    area_code
+		, region,     address,     road_address, building
+		, zip_code,   latitude,    longitude,    radius
+		, hide
+		, insert_code, insert_date, update_code, update_date
+		)
+		values(
+		#{place_type}  ,#{sign_code}  ,@area_code
+		,@region     ,#{address}    ,#{road_address} ,#{building}
+		,#{zip_code}    ,#{latitude}   ,#{longitude}    ,#{radius}
+		,#{hide}
+		,#{insert_code} ,current_timestamp(),#{insert_code}  ,current_timestamp()
+		)
+		ON DUPLICATE KEY UPDATE
+		place_type   = #{place_type}
+		,area_code    = @area_code
+		,region       = @region
+		,address      = #{address}
+		,road_address = #{road_address}
+		,building     = #{building}
+		,zip_code     = #{zip_code}
+		,latitude     = #{latitude}
+		,longitude    = #{longitude}
+		,radius       = #{radius}
+		,hide         = #{hide}
+		,update_code  = #{insert_code}
+		,update_date  = current_timestamp();
+		<selectKey resultType="int"  keyProperty="place_code" order="AFTER">
+			SELECT LAST_INSERT_ID() as place_code;
+		</selectKey>
+	</insert>
+	<delete id="delete" parameterType="com.mrc.db.dto.signage.t_signage">
+		delete from t_signage_place
+		<where>
+			<if test="sign_code != null ">
+				and sign_code = #{sign_code}
+			</if>
+			<if test="place_code != null ">
+				and place_code = #{place_code}
+			</if>
+		</where>
+	</delete>
+
+</mapper>

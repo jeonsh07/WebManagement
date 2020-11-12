@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mrc.db.mapper.IMemberWithdrawMapper">
+    <select id="getList"
+            parameterType="com.mrc.db.dto.member.t_member_withdraw"
+            resultType="com.mrc.db.dto.member.t_member_withdraw">
+            select a.member_code
+                  ,a.remark
+                  ,a.is_reasion1
+                  ,a.is_reasion2
+                  ,a.is_reasion3
+                  ,a.is_reasion4
+                  ,a.insert_code
+                  ,a.insert_date
+                  ,a.waiting_day
+                  ,a.withdraw_code
+                  ,a.withdraw_date
+              from t_member a
+        <where>
+            <if test="member_code != null ">
+                 and a.member_code = #{member_code}
+            </if>
+            <if test="is_reasion1 != null">
+                and a.is_reasion1 = #{is_reasion1}
+            </if>
+            <if test="is_reasion2 != null">
+                and a.is_reasion2 = #{is_reasion2}
+            </if>
+            <if test="is_reasion3 != null">
+                and a.is_reasion3 = #{is_reasion3}
+            </if>
+            <if test="is_reasion4 != null">
+                and a.is_reasion4 = #{is_reasion4}
+            </if>
+            <if test="withdraw_date != null">
+                <![CDATA[ and a.withdraw_date < #{withdraw_date} ]]>
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" keyProperty="member_code" parameterType="com.mrc.db.dto.member.t_member_withdraw" >
+        insert into t_member_withdraw
+        ( member_code, remark,        is_reasion1
+         ,is_reasion2, is_reasion3,   is_reasion4, insert_code,   insert_date
+         ,waiting_day, withdraw_code, withdraw_date
+        )
+        values( #{member_code},   #{remark},           #{is_reasion1}
+               ,#{is_reasion2},   #{is_reasion3},      #{is_reasion4}
+               ,#{insert_code},   current_timestamp(), 0
+               ,#{withdraw_code}, current_timestamp()
+            );
+        ON DUPLICATE KEY UPDATE
+          remark 	    = #{remark}
+        , is_reasion1   = #{is_reasion1}
+        , is_reasion2   = #{is_reasion2}
+        , is_reasion3   = #{is_reasion3}
+        , is_reasion4   = #{is_reasion4}
+        , hide 		    = #{hide}
+        , insert_code   = #{insert_code}
+        , insert_date   = current_timestamp();
+        , waiting_day   = #{waiting_day}
+        , withdraw_code = #{withdraw_code}
+        , withdraw_date = #{withdraw_date};
+
+        update t_member
+        set hide = 1
+        where member_code = #{member_code};
+    </insert>
+
+    <delete id="delete" parameterType="com.mrc.db.dto.member.t_member_withdraw">
+        delete from t_member_withdraw
+         where member_code = #{member_code}
+    </delete>
+</mapper>

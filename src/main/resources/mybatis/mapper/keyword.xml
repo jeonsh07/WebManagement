@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mrc.db.mapper.IKeywordMapper">
+	<select id="getList"
+		parameterType="com.mrc.db.dto.keyword.keyword_cond"
+		resultType="com.mrc.db.dto.keyword.t_keyword">
+		select *
+		  from t_keyword
+		<where>
+			<if test="keyword_type != null and chosung != '' ">
+				and keyword_type = #{keyword_type}
+			</if>
+			<if test="chosung != null and chosung != '' ">
+				and chosung like CONCAT('%', #{chosung}, '%')
+			</if>
+			<if test="jungsung != null and jungsung != '' ">
+				and jungsung like CONCAT('%', #{jungsung}, '%')
+			</if>
+			<if test="keyword_units != null and keyword_units != '' ">			
+				and keyword_units like CONCAT('%', #{keyword_units}, '%')
+			</if>	
+		</where>
+		ORDER BY ${sort_column_1} DESC, ${sort_column_2} LIMIT #{limit};
+	</select>
+	
+	<select id="getAutoList"
+		parameterType="com.mrc.db.dto.keyword.keyword_cond"
+		resultType="com.mrc.db.dto.keyword.t_keyword">
+		select *
+		  from t_keyword
+		  
+		<where>
+			<if test="keyword_type != null  ">
+				and keyword_type = #{keyword_type}
+			</if>
+			<if test="keyword_code != null ">			
+				and keyword_code in (SELECT IFNULL(base_code ,keyword_code) FROM t_keyword
+									  WHERE keyword_code = #{keyword_code})
+			</if>
+		
+			<if test="keyword_units != '' and chosung == '' ">			
+				and keyword_code in (SELECT IFNULL(base_code ,keyword_code) FROM t_keyword
+									  WHERE chosung like CONCAT('%', #{keyword_units}, '%') OR keyword_units like CONCAT('%', #{keyword_units}, '%'))
+			</if>
+			
+			<if test="keyword_units != '' and chosung != '' ">			
+				and keyword_code in (SELECT IFNULL(base_code ,keyword_code) FROM t_keyword
+									  WHERE chosung like CONCAT('%', #{chosung}, '%') and keyword_units like CONCAT('%', #{keyword_units}, '%'))
+			</if>
+			
+		</where>
+		ORDER BY ${sort_column_1}, ${sort_column_2}  LIMIT ${limit};
+	</select>
+	
+	<insert id="save" keyProperty="keyword_type,base_code, keyword_name">
+			INSERT INTO t_keyword
+			  (	
+			    keyword_type,
+			  	keyword_name,
+			  	keyword_desc,    
+			  	base_code,
+			  	is_synonym,
+				chosung,    
+				jungsung,   
+				jongsung,   
+				keyword_units,
+				latitude,
+				longitude,
+				status,
+				hide,
+				insert_code, 
+			  	insert_date, 
+			  	update_code, 
+			  	update_date
+			  )
+		    values( 
+		    	   #{keyword_type}, 
+		    	   #{keyword_name},
+		    	   #{keyword_desc},
+		    	   #{base_code},
+				   #{is_synonym},
+		    	   #{chosung},
+		    	   #{jungsung},
+		    	   #{jongsung},  
+		    	   #{keyword_units},
+		    	   #{latitude},
+				   #{longitude},
+		    	   #{status},
+		    	   #{hide},
+		    	   #{insert_code},  
+		    	   current_timestamp(),
+		    	   #{insert_code}, 
+		    	   current_timestamp()
+		    	  )
+		 ON DUPLICATE KEY UPDATE 
+		
+		    keyword_desc 	= #{keyword_desc}
+		  , latitude        = #{latitude}
+		  , longitude       = #{longitude}
+		  , status 			= #{status}
+		  , search_cnt 		= #{search_cnt}
+		  , hide 			= #{hide}
+		  , update_code 	= #{insert_code}
+		  , update_date 	= current_timestamp();
+		  
+		<selectKey resultType="int"  keyProperty="keyword_code" order="AFTER">
+        	SELECT keyword_code FROM t_keyword WHERE keyword_name = #{keyword_name};
+  		</selectKey>			
+	</insert>
+</mapper>

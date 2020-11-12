@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration>
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%d{HH:mm:ss.SSS} [%-5level] [%thread] [%logger{36}] - %m%n</Pattern>
+        </layout>
+    </appender>
+
+    <!--name은 패키지명-->
+    <logger name="study" level="DEBUG"/>
+    <logger name="jdbc" level="OFF"/>
+    <logger name="jdbc.sqlonly" level="INFO" additivity="false">       
+       <appender-ref ref="STDOUT" />    
+     </logger>
+    <logger name="jdbc.sqltiming" level="DEBUG" additivity="false">     
+       <appender-ref ref="STDOUT" />    </logger>
+    <logger name="jdbc.resultsettable" level="INFO" additivity="false">  
+       <appender-ref ref="STDOUT" />    
+    </logger>
+	<root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

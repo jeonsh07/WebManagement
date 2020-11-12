@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mrc.db.mapper.IBoardMapper">
+	<select id="getList"
+		parameterType="com.mrc.db.dto.board.board_cond"
+		resultType="com.mrc.db.dto.board.t_board">
+		select a.board_code
+		     , a.board_type
+		     , a.title
+		     , a.content
+		     , a.search_cnt
+		     , a.hide
+		     , a.insert_code
+		     , b.member_name as insert_name
+		     , a.insert_date
+		     , case when c.board_code is null then 0 else 1 end AS is_read
+		from t_board a
+	   inner join t_member b
+	      on a.insert_code = b.member_code 
+	    left join t_board c
+	      on a.board_code = c.board_code 
+	    <choose>
+	      	<when test="board_codes != null and board_codes != '' ">
+				and c.board_code not in (${board_codes}) 
+			</when>
+		</choose>
+			
+		<where>
+		    <if test="board_code != null ">
+				and a.board_code = #{board_code}
+			</if>
+			<if test="board_type != null ">
+				and a.board_type = #{board_type}
+			</if>
+			<if test="title != null and title !='' ">
+				and a.title = #{title}
+			</if>
+			<if test="content != null and content != '' ">
+				and a.content = #{content}
+			</if>
+			<if test="insert_code != null ">
+				and a.insert_code = #{insert_code}
+			</if>
+			
+			<if test="is_read != null ">
+				and case when c.board_code is null then 0 else 1 end = #{is_read}
+			</if>
+			
+		</where>
+		order by a.board_code DESC
+		limit ${start_row}, ${row_size}
+	</select>
+
+	<insert id="save" parameterType="com.mrc.db.dto.board.t_board" >
+		INSERT INTO t_board
+		(board_code, board_type, title, content, search_cnt, hide, insert_code, insert_date )
+		
+		values(#{board_code}, #{board_type}, #{title}, #{content}, #{search_cnt}, #{hide}, #{insert_code} ,current_timestamp())
+		 ON DUPLICATE KEY UPDATE 
+		    title         = #{title}
+		  , content       = #{content}
+		  , insert_date   = current_timestamp();
+	</insert>
+
+	<delete id="delete" parameterType="com.mrc.db.dto.board.t_board">
+		delete from t_board
+		 where board_code = #{board_code}
+   </delete>
+	<update id="update" parameterType="com.mrc.db.dto.board.t_board">
+
+		update t_board
+           set title         = #{title}
+		     , content       = #{content}
+		     , insert_date   = current_timestamp()
+		 where board_code = #{board_code}
+
+	</update>
+	<select id="getReadList"
+		parameterType="com.mrc.db.dto.board.t_board_read"
+		resultType="com.mrc.db.dto.board.t_board_read">
+		
+		select board_type, insert_code, board_codes
+		  from t_board_read 
+		 where board_type = #{board_type}
+		   and insert_code = #{insert_code}
+	</select>
+	<update id="read_update" parameterType="com.mrc.db.dto.board.t_board_read">
+
+		INSERT INTO t_board_read
+		(board_type, insert_code, board_codes )
+		values( #{board_type}, #{insert_code},  '${board_code}')
+		ON DUPLICATE KEY UPDATE
+		     board_type         = #{board_type}
+		   , insert_code       = #{insert_code};
+		
+		UPDATE t_board_read
+		   SET board_codes = CASE WHEN IFNULL(board_codes,'') = '' 
+		                          THEN '${board_code}' 
+		                          ELSE CONCAT(board_codes,',','${board_code}') 
+		                          END
+		 where board_type = #{board_type}
+   		   AND insert_code = #{insert_code}
+   		   AND read_idx not in (SELECT read_idx 
+   		                          FROM t_board_read
+		                         WHERE board_type = #{board_type}
+   		                           AND insert_code = #{insert_code}
+                                   AND CONCAT(',',board_codes,',') LIKE '%,${board_code},%'
+		                       ); 
+		update t_board
+		   set search_cnt = search_cnt + 1
+		 where board_code = #{board_code};
+		  
+	</update>
+</mapper>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mrc.db.mapper.ISignageMapper">
+	<select id="getList"
+		parameterType="com.mrc.db.dto.signage.signage_cond"
+		resultType="com.mrc.db.dto.signage.t_signage">
+		select a.*
+		      ,m.member_name
+              ,c.member_name as insert_name
+              ,d.member_name as update_name
+              ,b.name as is_vertical_name
+		      ,b2.name as frame_type_name
+		from t_signage a
+	   inner join t_common b
+	      on b.main_code = 'S004'
+	     and b.sub_code = a.is_vertical
+	   inner join t_common b2
+	      on b2.main_code = 'D002'
+	     and b2.sub_code = a.frame_type 
+	   inner join t_member m
+	      on a.member_code = m.member_code
+	   inner join t_member c
+	      on a.insert_code = c.member_code
+	   inner join t_member d
+	      on a.update_code = d.member_code
+	     
+	      
+		<where>
+			<if test="sign_code != null ">
+				and a.sign_code = #{sign_code}
+			</if>
+		   
+			<if test="member_code != null ">
+				and a.member_code = #{member_code}
+			</if>
+			<if test="sign_type != null ">
+				and a.sign_type = #{sign_type}
+			</if>
+			
+			<if test="sign_name != null and sign_name != '' ">
+				and a.sign_name LIKE CONCAT('%', #{sign_name}, '%')
+			</if>
+			<if test="hide != null  ">
+				and a.hide = #{hide}
+			</if>
+		</where>
+		order by a.sign_code desc
+	</select>
+
+	<insert id="save"  keyProperty="sign_code" parameterType="com.mrc.db.dto.signage.t_signage" >
+		insert into t_signage
+		( sign_name, sign_type, frame_type,  is_vertical	
+		 ,member_code, remark,    hide,      insert_code, insert_date	
+		 ,update_code, update_date	
+		)
+		values(
+		  #{sign_name}, #{sign_type}, #{frame_type},  #{is_vertical}
+		 ,#{member_code}, #{remark},    #{hide},      #{insert_code}, current_timestamp()
+		 ,#{insert_code}, current_timestamp()
+		)
+		 ON DUPLICATE KEY UPDATE 
+		    sign_name    = #{sign_name}
+		  , sign_type   = #{sign_type}
+		  , frame_type   = #{frame_type}
+		  , is_vertical  = #{is_vertical}
+		  , member_code  = #{member_code}
+		  , remark       = #{remark}
+	
+		  , remark         = #{remark}
+		  , hide           = #{hide}
+		  , update_code    = #{insert_code}
+		  , update_date    = current_timestamp();
+		  <selectKey resultType="int"  keyProperty="sign_code" order="AFTER">
+        	SELECT LAST_INSERT_ID() as sign_code;
+  		</selectKey> 
+	</insert>
+	<delete id="delete" parameterType="com.mrc.db.dto.signage.t_signage">
+		delete from t_signage
+		 where sign_code = #{sign_code}
+			
+		
+	</delete>
+	<update id="update" parameterType="com.mrc.db.dto.signage.t_signage">
+		update t_signage
+		set sign_name    = #{sign_name}
+		  , sign_type   = #{sign_type}
+		  , frame_type   = #{frame_type}
+		  , is_vertical  = #{is_vertical}
+		  , member_code  = #{member_code}
+		  , remark       = #{remark}
+	
+		  , remark         = #{remark}
+		  , hide           = #{hide}
+		  , update_code    = #{insert_code}
+		  , update_date    = current_timestamp();
+		where sign_code = #{sign_code}
+	</update>
+</mapper>
